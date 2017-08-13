@@ -10,6 +10,7 @@ import java.net.Socket;
 public class BlockchainServer {
 
 	private Blockchain blockchain;
+	static Socket socket;
 
 	public BlockchainServer() {
 		blockchain = new Blockchain();
@@ -31,16 +32,20 @@ public class BlockchainServer {
 		int portNumber = Integer.parseInt(args[0]);
 		BlockchainServer bcs = new BlockchainServer();
 		ServerSocket serverSocket = null;
-		Socket socket = null;
 		try {
 			serverSocket = new ServerSocket(portNumber);
-			socket = serverSocket.accept();
-			bcs.serverHandler(socket.getInputStream(), socket.getOutputStream());
-			
-			
+			while(true){
+				socket = serverSocket.accept();
+				bcs.serverHandler(socket.getInputStream(), socket.getOutputStream());
+				socket.close();
+			}
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+		}
+		catch(Exception e) {
+			//e.getMessage();
 		}
 		finally {
 			reallyClose(socket);
@@ -55,11 +60,11 @@ public class BlockchainServer {
 		PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
 		// implement your code here.
 		try {
-			String line = "";
-			while(line != null) {
-				line = inputReader.readLine();
-				if(line.equals("cc"))
+			String line;
+			while((line = inputReader.readLine()) != null) {
+				if(line.equals("cc")) {
 					return;
+				}
 				if(line.equals("pb")) {
 					outWriter.println(blockchain.toString());
 					continue;
@@ -68,7 +73,6 @@ public class BlockchainServer {
 					outWriter.println("Error\n");
 					continue;
 				}
-				
 				if(blockchain.addTransaction(line) != 0)
 					outWriter.println("Accepted\n");
 				else
@@ -76,7 +80,16 @@ public class BlockchainServer {
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+		}
+		catch(Exception e) {
+			//e.printStackTrace();
+		}
+		finally {
+			reallyClose(outWriter);
+			reallyClose(clientOutputStream);
+			reallyClose(inputReader);
+			reallyClose(clientInputStream);
 		}
 
 	}
@@ -87,10 +100,35 @@ public class BlockchainServer {
 			serve.close();
 		} catch (Exception e) {}
 	}
-	
+
 	public static void reallyClose(Socket socket) {
 		try {
 			socket.close();
 		} catch (Exception e) {}
+	}
+
+	public static void reallyClose(InputStream is) {
+		try {
+			is.close();
+		} catch (Exception e) {}
+	}
+
+	public static void reallyClose(OutputStream os) {
+		try {
+			os.close();
+		} catch (Exception e) {}
+	}
+
+	public static void reallyClose(BufferedReader bufferedReader) {
+		try {
+			bufferedReader.close();
+		} catch(Exception e) {}
+
+	}
+
+	public static void reallyClose(PrintWriter pw) {
+		try {
+			pw.close();
+		} catch(Exception e) {}
 	}
 }
