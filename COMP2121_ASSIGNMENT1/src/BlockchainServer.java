@@ -28,16 +28,13 @@ public class BlockchainServer {
 		if (args.length != 1) {
 			return;
 		}
-		System.out.println("Wooh");
 		int portNumber = Integer.parseInt(args[0]);
 		BlockchainServer bcs = new BlockchainServer();
 		ServerSocket serverSocket = null;
 		Socket socket = null;
 		try {
 			serverSocket = new ServerSocket(portNumber);
-			System.out.println("whoa1");
 			socket = serverSocket.accept();
-			System.out.println("whoa2");
 			bcs.serverHandler(socket.getInputStream(), socket.getOutputStream());
 			
 			
@@ -56,14 +53,26 @@ public class BlockchainServer {
 
 		BufferedReader inputReader = new BufferedReader(new InputStreamReader(clientInputStream));
 		PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
-		System.out.println("---");
 		// implement your code here.
 		try {
-			while(inputReader.ready()) {
-				System.out.println("pl,s");
-				String line = inputReader.readLine();
-				System.out.println(line);
-				outWriter.print(line);
+			String line = "";
+			while(line != null) {
+				line = inputReader.readLine();
+				if(line.equals("cc"))
+					return;
+				if(line.equals("pb")) {
+					outWriter.println(blockchain.toString());
+					continue;
+				}
+				if(!line.startsWith("tx")) {
+					outWriter.println("Error\n");
+					continue;
+				}
+				
+				if(blockchain.addTransaction(line) != 0)
+					outWriter.println("Accepted\n");
+				else
+					outWriter.println("Rejected\n");
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
