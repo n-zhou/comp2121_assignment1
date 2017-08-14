@@ -6,14 +6,30 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.Semaphore;
 
-public class BlockchainServer {
+public class BlockchainServer extends Thread {
 
 	private Blockchain blockchain;
-	static Socket socket;
-
+	public Socket socket;
+	static Semaphore sem = new Semaphore(50);
+	
 	public BlockchainServer() {
 		blockchain = new Blockchain();
+	}
+	
+	public void setSocket(Socket socket) {
+		this.socket = socket;
+	}
+	
+	public void run() {
+		try {
+			serverHandler(socket.getInputStream(), socket.getOutputStream());
+		} catch(Exception e) {}
+		finally {
+			sem.release();
+		}
+		
 	}
 
 	// getters and setters
@@ -30,14 +46,14 @@ public class BlockchainServer {
 			return;
 		}
 		int portNumber = Integer.parseInt(args[0]);
-		BlockchainServer bcs = new BlockchainServer();
 		ServerSocket serverSocket = null;
 		try {
 			serverSocket = new ServerSocket(portNumber);
 			while(true){
-				socket = serverSocket.accept();
-				bcs.serverHandler(socket.getInputStream(), socket.getOutputStream());
-				socket.close();
+				sem.acquire();
+				BlockchainServer server = new BlockchainServer();
+				server.setSocket(serverSocket.accept());
+				server.start();
 			}
 
 		} catch (IOException e) {
@@ -48,7 +64,6 @@ public class BlockchainServer {
 			//e.getMessage();
 		}
 		finally {
-			reallyClose(socket);
 			reallyClose(serverSocket);
 		}
 		// implement your code here.
@@ -90,6 +105,7 @@ public class BlockchainServer {
 			reallyClose(clientOutputStream);
 			reallyClose(inputReader);
 			reallyClose(clientInputStream);
+			reallyClose(socket);
 		}
 
 	}
